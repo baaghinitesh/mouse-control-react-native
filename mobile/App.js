@@ -104,7 +104,6 @@ export default function App() {
 
       <View style={styles.padWrap}>
         <Touchpad
-          enabled={isConnected}
           onMove={(dx, dy) =>
             send({
               type: "mouse_move",
@@ -112,7 +111,7 @@ export default function App() {
               dy: Math.round(dy * sens),
             })
           }
-          onLeftClick={() => send({ type: "mouse_click", button: "left" })}
+          onClick={() => send({ type: "mouse_click", button: "left" })}
           onRightClick={() => send({ type: "mouse_click", button: "right" })}
           onScroll={(dx, dy) =>
             send({
@@ -122,6 +121,13 @@ export default function App() {
             })
           }
           onDragStart={() => send({ type: "mouse_down", button: "left" })}
+          onDragMove={(dx, dy) =>
+            send({
+              type: "dragMove",
+              dx: Math.round(dx * sens),
+              dy: Math.round(dy * sens),
+            })
+          }
           onDragEnd={() => send({ type: "mouse_up", button: "left" })}
         />
       </View>
