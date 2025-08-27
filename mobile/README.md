@@ -26,3 +26,7 @@ A simple React Native app that turns your phone into a touchpad, sending mouse c
 - Double‑tap + hold → drag (mouse down); release → mouse up
 
 my ip- 192.168.29.224
+
+
+# Start Expo
+npx expo start

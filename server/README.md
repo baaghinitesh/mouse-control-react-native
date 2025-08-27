@@ -37,3 +37,7 @@ A tiny FastAPI WebSocket server that receives mouse commands from the mobile app
 ## Notes
 - `pyautogui` uses the active desktop session. Make sure the screen is unlocked.
 - Horizontal scroll support varies by OS; this server maps `dx` to `hscroll` when available.
+
+
+## Run the server
+uvicorn main:app --host 0.0.0.0 --port 8765

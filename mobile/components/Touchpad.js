@@ -1,96 +1,120 @@
-import React, { useRef } from "react";
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
-import { GestureHandlerRootView, GestureDetector, Gesture } from "react-native-gesture-handler";
+import React, { useRef, useState } from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
-export default function Touchpad({ socket }) {
-  const lastX = useRef(0);
-  const lastY = useRef(0);
+export default function Touchpad({
+  enabled = true,
+  onMove,
+  onScroll,
+  onLeftClick,
+  onRightClick,
+  onDragStart,
+  onDragEnd,
+}) {
+  const [dragging, setDragging] = useState(false);
+  const moved = useRef(false);
+  const sensitivity = 1.5;
 
-  // Pan gesture for finger movement
+  // Pan gesture
   const pan = Gesture.Pan()
-    .onStart((e) => {
-      lastX.current = e.x;
-      lastY.current = e.y;
+    .minDistance(1)
+    .onBegin(() => {
+      moved.current = false;
     })
-    .onUpdate((e) => {
-      const dx = e.x - lastX.current;
-      const dy = e.y - lastY.current;
+    .onUpdate((g) => {
+      moved.current = true;
+      const dx = g.changeX * sensitivity;
+      const dy = g.changeY * sensitivity;
 
-      lastX.current = e.x;
-      lastY.current = e.y;
+      if (!enabled) return;
 
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "move", dx, dy }));
+      if (dragging) {
+        onMove && onMove(dx, dy);
+        onDragStart && onDragStart();
+      } else if (g.numberOfPointers === 1) {
+        onMove && onMove(dx, dy);
+      } else if (g.numberOfPointers === 2) {
+        onScroll && onScroll(dx, dy);
+      }
+    })
+    .onEnd(() => {
+      if (!moved.current && !dragging) {
+        onLeftClick && onLeftClick();
+      }
+      if (dragging) {
+        setDragging(false);
+        onDragEnd && onDragEnd();
       }
     });
 
-  // Left click
-  const handleLeftClick = () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "click", button: "left" }));
-    }
-  };
-
-  // Right click
-  const handleRightClick = () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "click", button: "right" }));
-    }
-  };
+  // Long press for drag
+  const longPress = Gesture.LongPress()
+    .minDuration(300)
+    .onStart(() => {
+      if (!enabled) return;
+      setDragging(true);
+      onDragStart && onDragStart();
+    })
+    .onEnd(() => {
+      if (!enabled) return;
+      setDragging(false);
+      onDragEnd && onDragEnd();
+    });
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        {/* Touchpad Area */}
-        <GestureDetector gesture={pan}>
-          <View style={styles.touchArea}>
-            <Text style={{ color: "#aaa" }}>Move your finger here</Text>
-          </View>
-        </GestureDetector>
-
-        {/* Buttons */}
-        <View style={styles.buttons}>
-          <TouchableOpacity style={styles.button} onPress={handleLeftClick}>
-            <Text style={styles.buttonText}>Left Click</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleRightClick}>
-            <Text style={styles.buttonText}>Right Click</Text>
-          </TouchableOpacity>
+    <View style={{ flex: 1 }}>
+      <GestureDetector gesture={Gesture.Exclusive(pan, longPress)}>
+        <View style={[styles.pad, dragging && styles.dragging]}>
+          <Text style={styles.hint}>
+            Single finger = move • Tap = left click • Long press = drag • Two-finger drag = scroll
+          </Text>
         </View>
+      </GestureDetector>
+
+      <View style={styles.buttons}>
+        <Pressable style={styles.button} onPress={onLeftClick}>
+          <Text style={styles.buttonText}>Left Click</Text>
+        </Pressable>
+        <Pressable style={styles.button} onPress={onRightClick}>
+          <Text style={styles.buttonText}>Right Click</Text>
+        </Pressable>
       </View>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  pad: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#111",
-    padding: 20,
-  },
-  touchArea: {
-    width: "100%",
-    height: "70%",
-    backgroundColor: "#222",
+    margin: 20,
     borderRadius: 12,
+    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
+    padding: 10,
+  },
+  dragging: {
+    borderColor: "#4ade80",
+    borderWidth: 2,
+  },
+  hint: {
+    color: "#9ca3af",
+    fontSize: 12,
+    textAlign: "center",
   },
   buttons: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    width: "100%",
+    height: 80,
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   button: {
     flex: 1,
     backgroundColor: "#444",
-    padding: 15,
     marginHorizontal: 10,
-    borderRadius: 8,
+    justifyContent: "center",
     alignItems: "center",
+    borderRadius: 8,
   },
   buttonText: {
     color: "#fff",
