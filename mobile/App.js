@@ -84,19 +84,24 @@ export default function App() {
       <View style={styles.controls}>
         <Pressable
           style={styles.smallBtn}
-          onPress={() => send({ type: "mouse_click", button: "left" })}
+          onPressIn={() => send({ type: "mouse_down", button: "left" })}
+          onPressOut={() => send({ type: "mouse_up", button: "left" })}
         >
           <Text>Left</Text>
         </Pressable>
+
         <Pressable
           style={styles.smallBtn}
-          onPress={() => send({ type: "mouse_click", button: "right" })}
+          onPressIn={() => send({ type: "mouse_down", button: "right" })}
+          onPressOut={() => send({ type: "mouse_up", button: "right" })}
         >
           <Text>Right</Text>
         </Pressable>
+
         <Pressable
           style={styles.smallBtn}
-          onPress={() => send({ type: "mouse_click", button: "middle" })}
+          onPressIn={() => send({ type: "mouse_down", button: "middle" })}
+          onPressOut={() => send({ type: "mouse_up", button: "middle" })}
         >
           <Text>Middle</Text>
         </Pressable>
@@ -111,8 +116,8 @@ export default function App() {
               dy: Math.round(dy * sens),
             })
           }
-          onClick={() => send({ type: "mouse_click", button: "left" })}
-          onRightClick={() => send({ type: "mouse_click", button: "right" })}
+          onLeftClick={() => send({ type: "click", button: "left" })} // ✅ add this
+          onRightClick={() => send({ type: "click", button: "right" })}
           onScroll={(dx, dy) =>
             send({
               type: "mouse_scroll",
